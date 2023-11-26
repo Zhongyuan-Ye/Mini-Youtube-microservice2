@@ -36,6 +36,15 @@ class VerificationRequest(BaseModel):
     email: str
     code: str
 
+async def subscribe_email_to_sns(email):
+    sns_client.subscribe(
+        TopicArn='arn:aws:sns:us-east-2:318036681689:microservice-login',
+        Protocol='email',
+        Endpoint=email
+    )
+
+
+
 async def send_verification_email(email, code):
     message = f"Your verification code is: {code}"
     response = sns_client.publish(
@@ -60,6 +69,7 @@ async def register_user(request: RegisterRequest):
     if result:
         return {"status": "exist"}
     else:
+        await subscribe_email_to_sns(request.email)
         verification_code = str(uuid.uuid4())
         await send_verification_email(request.email, verification_code)
         query = customers.insert().values(email=request.email, verified=False, verification_code=verification_code)
