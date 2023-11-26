@@ -69,13 +69,15 @@ async def register_user(request: RegisterRequest):
     if result and result.verified:
         return {"status": "exist"}
     elif result:
+        verification_code = result.verification_code
+        await send_verification_email(request.email, verification_code)
+        return {"status": "verification code sent"}
+    else:
+        await subscribe_email_to_sns(request.email)
         verification_code = str(uuid.uuid4())
         await send_verification_email(request.email, verification_code)
         query = customers.insert().values(email=request.email, verified=False, verification_code=verification_code)
         await database.execute(query)
-        return {"status": "verification email sent"}
-    else:
-        await subscribe_email_to_sns(request.email)
         return {"status": "subscribtion email sent"}
 
 @app.post("/verify/")
