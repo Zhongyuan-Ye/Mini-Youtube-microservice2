@@ -22,7 +22,7 @@ engine = sqlalchemy.create_engine(DATABASE_URL)
 metadata.create_all(engine)
 
 # AWS SNS client
-sns_client = boto3.client('sns')
+sns_client = boto3.client('sns', region_name='us-east-2')
 
 app = FastAPI()
 
