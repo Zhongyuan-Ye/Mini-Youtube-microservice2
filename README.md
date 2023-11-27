@@ -17,4 +17,5 @@ curl -X POST http://ec2-3-128-95-160.us-east-2.compute.amazonaws.com:1024/login/
 
 login-verify
 
+curl -X POST http://ec2-3-128-95-160.us-east-2.compute.amazonaws.com:1024/verify-login/  -H "Content-Type: application/json"  -d '{"email": "zhongyuanye2000@gmail.com", "code": "<verification_code>"}' 
 
