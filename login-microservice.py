@@ -117,7 +117,51 @@ async def verify_login(request: VerificationRequest):
         return {"status": "login successful"}
     else:
         return {"status": "login failed"}
-    
+
+
+from authlib.integrations.starlette_client import OAuth
+from starlette.requests import Request
+
+
+CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+oauth.register(
+    name='google',
+    client_id= "177640167439-89pg7khuonjha41ccg4ngir2ph3nakqn.apps.googleusercontent.com",
+    client_secret= "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" ,
+    server_metadata_url=CONF_URL,
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
+
+@app.get('/authenticate/')
+async def authenticate(request: Request):
+    redirect_uri = request.url_for('callback')
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+@app.get('/callback/')
+async def callback(request: Request):
+    token = await oauth.google.authorize_access_token(request)
+
+    user_info = await oauth.google.parse_id_token(request, token)
+
+    email = user_info.get("email")
+    if email is None:
+        # If email is not provided by Google, raise an HTTPException
+        raise HTTPException(status_code=400, detail="Email not provided by Google")
+
+    # Check if the user exists in the database
+    query = customers.select().where(customers.c.email == email)
+    existing_user = await database.fetch_one(query)
+
+    if existing_user:
+        return {"status": "existing user", "email": email}
+    else:
+        # If the user does not exist, create a new record in the database
+        new_user_query = customers.insert().values(email=email, verified=True)
+        await database.execute(new_user_query)
+
+        return {"status": "new user registered", "email": email}
 
 
 
