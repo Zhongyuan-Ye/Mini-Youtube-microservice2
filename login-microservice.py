@@ -5,6 +5,11 @@ import sqlalchemy
 import boto3
 import uuid
 
+
+
+
+
+
 # Database configuration
 DATABASE_URL = "sqlite:///./test.db"
 database = databases.Database(DATABASE_URL)
@@ -120,16 +125,13 @@ async def verify_login(request: VerificationRequest):
 
 
 from authlib.integrations.starlette_client import OAuth
-from starlette.requests import Request
-from authlib.integrations.starlette_client import OAuth
-oauth = OAuth()
 
-CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+oauth = OAuth()
 oauth.register(
     name='google',
-    client_id= "177640167439-89pg7khuonjha41ccg4ngir2ph3nakqn.apps.googleusercontent.com",
-    client_secret= "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" ,
-    server_metadata_url=CONF_URL,
+    client_id="177640167439-89pg7khuonjha41ccg4ngir2ph3nakqn.apps.googleusercontent.com",
+    client_secret="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",
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
         'scope': 'openid email profile'
     }
@@ -143,26 +145,20 @@ async def authenticate(request: Request):
 @app.get('/callback/')
 async def callback(request: Request):
     token = await oauth.google.authorize_access_token(request)
+    user = await oauth.google.parse_id_token(request, token)
+    email = user.get("email")
 
-    user_info = await oauth.google.parse_id_token(request, token)
-
-    email = user_info.get("email")
-    if email is None:
-        # If email is not provided by Google, raise an HTTPException
-        raise HTTPException(status_code=400, detail="Email not provided by Google")
-
-    # Check if the user exists in the database
+    # Check if user exists in database
     query = customers.select().where(customers.c.email == email)
-    existing_user = await database.fetch_one(query)
+    result = await database.fetch_one(query)
 
-    if existing_user:
-        return {"status": "existing user", "email": email}
-    else:
-        # If the user does not exist, create a new record in the database
-        new_user_query = customers.insert().values(email=email, verified=True)
-        await database.execute(new_user_query)
-
-        return {"status": "new user registered", "email": email}
+    if not result:
+        # Insert new user into database
+        query = customers.insert().values(email=email, verified=True)
+        await database.execute(query)
+    
+    # Handle user login or registration logic here
+    return {"email": email}
 
 
 
