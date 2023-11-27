@@ -40,6 +40,20 @@ class LoginRequest(BaseModel):
 class VerificationRequest(BaseModel):
     email: str
     code: str
+class UserBase(BaseModel):
+    email: str
+
+async def startup_event():
+    await database.connect()
+app.add_event_handler("startup", startup_event)
+
+async def shutdown_event():
+    await database.disconnect()
+app.add_event_handler("shutdown", shutdown_event)
+
+
+
+
 
 async def subscribe_email_to_sns(email):
     sns_client.subscribe(
