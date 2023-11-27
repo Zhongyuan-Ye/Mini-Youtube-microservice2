@@ -121,6 +121,7 @@ async def verify_login(request: VerificationRequest):
 
 from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
+import oauth
 
 
 CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
