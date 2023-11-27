@@ -122,10 +122,10 @@ async def verify_login(request: VerificationRequest):
 from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
 from authlib.integrations.starlette_client import OAuth
-
+oauth = OAuth()
 
 CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
-OAuth.register(
+oauth.register(
     name='google',
     client_id= "177640167439-89pg7khuonjha41ccg4ngir2ph3nakqn.apps.googleusercontent.com",
     client_secret= "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" ,
@@ -138,13 +138,13 @@ OAuth.register(
 @app.get('/authenticate/')
 async def authenticate(request: Request):
     redirect_uri = request.url_for('callback')
-    return await OAuth.google.authorize_redirect(request, redirect_uri)
+    return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @app.get('/callback/')
 async def callback(request: Request):
-    token = await OAuth.google.authorize_access_token(request)
+    token = await oauth.google.authorize_access_token(request)
 
-    user_info = await OAuth.google.parse_id_token(request, token)
+    user_info = await oauth.google.parse_id_token(request, token)
 
     email = user_info.get("email")
     if email is None:
