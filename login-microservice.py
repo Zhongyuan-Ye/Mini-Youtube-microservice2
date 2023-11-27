@@ -4,7 +4,7 @@ import databases
 import sqlalchemy
 import boto3
 import uuid
-
+from starlette.middleware.sessions import SessionMiddleware
 
 
 
@@ -30,7 +30,7 @@ metadata.create_all(engine)
 sns_client = boto3.client('sns', region_name='us-east-2')
 
 app = FastAPI()
-
+app.add_middleware(SessionMiddleware, secret_key="secret-key")
 class RegisterRequest(BaseModel):
     email: str
 
