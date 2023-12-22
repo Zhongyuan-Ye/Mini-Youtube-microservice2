@@ -1,8 +1,16 @@
+
 from fastapi import FastAPI, Request
 from authlib.integrations.starlette_client import OAuth
 from fastapi.responses import RedirectResponse
+from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
+
+# Add SessionMiddleware with a secret key
+# Replace 'your-secret-key' with a strong, secret key
+app.add_middleware(SessionMiddleware, secret_key="your-secret-key")
+
+
 
 # Configure OAuth
 oauth = OAuth()
@@ -16,6 +24,7 @@ oauth.register(
     }
 )
 
+
 @app.get('/authenticate/')
 async def authenticate(request: Request):
     redirect_uri = request.url_for('callback')
@@ -26,9 +35,6 @@ async def callback(request: Request):
     token = await oauth.google.authorize_access_token(request)
     user = await oauth.google.parse_id_token(request, token)
     return {"status": "successful", "email": user.get("email")}
-
-
-
 
 if __name__ == "__main__":
     import uvicorn
