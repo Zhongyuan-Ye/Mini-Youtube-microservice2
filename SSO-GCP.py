@@ -40,10 +40,7 @@ async def authenticate(request: Request):
 
 @app.get('/callback/')
 async def callback(request: Request):
-    # Handling the response from Google
-    token = await oauth.google.authorize_access_token(request)
-    user = await oauth.google.parse_id_token(request, token)
-    return {"status": "successful", "email": user.get("email")}
+    return {"status": "successful"}
 
 if __name__ == "__main__":
     import uvicorn
