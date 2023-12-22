@@ -3,14 +3,21 @@ from fastapi import FastAPI, Request
 from authlib.integrations.starlette_client import OAuth
 from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
 # Add SessionMiddleware with a secret key
-# Replace 'your-secret-key' with a strong, secret key
-app.add_middleware(SessionMiddleware, secret_key="your-secret-key")
+app.add_middleware(SessionMiddleware, secret_key="your-very-strong-secret-key")
 
-
+# Enable CORS (optional, depending on your frontend requirements)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Configure OAuth
 oauth = OAuth()
@@ -24,14 +31,15 @@ oauth.register(
     }
 )
 
-
 @app.get('/authenticate/')
 async def authenticate(request: Request):
-    redirect_uri = request.url_for('callback')
+    # Ensure the redirect_uri is consistent and correctly configured
+    redirect_uri = request.url_for('callback', _external=True)
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @app.get('/callback/')
 async def callback(request: Request):
+    # Handling the response from Google
     token = await oauth.google.authorize_access_token(request)
     user = await oauth.google.parse_id_token(request, token)
     return {"status": "successful", "email": user.get("email")}
