@@ -31,10 +31,11 @@ oauth.register(
     }
 )
 
+
 @app.get('/authenticate/')
 async def authenticate(request: Request):
     # Ensure the redirect_uri is consistent and correctly configured
-    redirect_uri = request.url_for('callback', _external=True)
+    redirect_uri = request.url_for('callback')
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @app.get('/callback/')
