@@ -39,6 +39,18 @@ class VerificationRequest(BaseModel):
 class UserBase(BaseModel):
     email: str
 
+
+async def send_subscription_invitation(email):
+    response = sns_client.subscribe(
+        TopicArn=sns_topic_arn,
+        Protocol='email',
+        Endpoint=email,
+        ReturnSubscriptionArn=True
+    )
+    return response
+
+
+
 @app.on_event("startup")
 async def startup():
     await database.connect()
@@ -76,6 +88,7 @@ async def register_user(request: RegisterRequest):
         await publish_event_to_sns('Register', request.email, verification_code)
         query = customers.insert().values(email=request.email, verified=False, verification_code=verification_code)
         await database.execute(query)
+        await send_subscription_invitation(request.email)
         return {"status": "subscription email sent"}
 
 @app.post("/login/")
